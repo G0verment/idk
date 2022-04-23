@@ -1,0 +1,912 @@
+local Material = loadstring(game:HttpGet("https://raw.githubusercontent.com/Kinlei/MaterialLua/master/Module.lua"))()
+if game.PlaceId == 660554346 then
+	local lastBankCheck = 0;
+	local player = game.Players.LocalPlayer
+	local keybindRemote
+	
+	local function findCorrectRemote()
+		for i, v in pairs(game.ReplicatedStorage.Remotes.Server:GetChildren()) do
+			if v.Name:sub(15, 15) == "4" then
+				return v
+			end
+		end
+	end
+	
+	local function fetchKeybind(action, packet)
+		keybindRemote = findCorrectRemote()
+		keybindRemote:FireServer(action, packet)
+	end
+	
+	_G.Stats = {
+		AutoRobSpeed = 25;
+		BountyReset = 3000;
+		BountyResetEnabled = false;
+		Robbed = false;
+	}
+	
+	local UI = Material.Load({
+		Title = "Whitelister's Hub V2",
+		Style = 3,
+		SizeX = 400,
+		SizeY = 300,
+		Theme = "Light"
+	})
+	
+	local MainCheats = UI.New({
+		Title = "Cheats"
+	})
+	local AutoFarm = UI.New({
+		Title = "AutoFarm"
+	})
+--	local combat = UI.New({
+--		Title = "COMBAT"
+--	})
+	
+	UI.Banner({
+		Text = "WE FINALLY UPDATED TO V2! Welcome and have fun! :)"
+	})
+	
+	AutoFarm.Slider({
+		Text = "AutoRob Speed (25 Recomended!)!",
+		Callback = function(value)
+			if value <= 90 and value >= 15 then
+				_G.Stats["AutoRobSpeed"] = value
+			else
+				player:Kick([[ [Error: 259 (Blacklist)]
+					You are Blacklisted from using this Whitelister's Hub!
+					
+					Date: ]].. os.date() ..[[
+					Reason: (Speed Spoofing/Value:]].. value ..[[)
+					
+					This blacklist is Permanent and cant be Appealed!
+					You are not banned from Buying another Key!
+				]]
+				)
+			end
+		end,
+		Min = 15,
+		Max = 90,
+		Def = 25,
+	})
+	
+	AutoFarm.Slider({
+		Text = "Bounty Cap!",
+		Callback = function(value)
+			if value <= 100000 and value >= 3000 then
+				_G.Stats["BountyReset"] = value
+			else
+				player:Kick([[ [Error: 259 (Blacklist)]
+					You are Blacklisted from using Whitelister's Hub!
+					
+					Date: ]].. os.date() ..[[
+					Reason: (Spoofing Values:]].. value ..[[)
+					
+					This blacklist is Permanent and cant be Appealed!
+					You are not banned from Buying another Key!
+				]]
+				)
+			end
+		end,
+		Min = 3000,
+		Max = 100000,
+		Def = 7000,
+	})
+	
+	AutoFarm.DataTable({
+		Text = "Data",
+		Callback = function(dt)
+			if dt["DonutStore [READ]"] then
+				_G.Stats["DonutStoreSmall"] = not _G.Stats["DonutStoreSmall"];
+			end--SkipTrain
+			if dt["Train Skip"] then
+				_G.Stats["TrainSkip"] = not _G.Stats["TrainSkip"];
+			end--SkipTrain
+			if dt["Bounty Reset"] then
+				_G.Stats["BountyResetEnabled"] = dt["Bounty Reset"];
+			end
+			for i, v in pairs(dt) do
+				if i == "AutoRob [⚠️ DETECTED ⚠️]" and v == true then
+					return
+				elseif i == "NDUFUDIFSBFSDFBSD" then
+					local TweenService = game:GetService("TweenService")
+					local vehicles = {}
+					local trainRemote
+					
+					for i, laser in pairs(workspace:GetChildren()) do
+						if laser:FindFirstChild("Laser") and laser:FindFirstChild("Laser").ClassName == "Script" then
+							laser:Destroy()
+						end
+					end
+					
+					local function getAllVehicles()
+						for i, v in pairs(workspace:GetChildren()) do
+							if v:FindFirstChild("PacketID") and v.Name == "Camaro" then
+								table.insert(vehicles, v.DriveSeat)
+							end
+						end
+					end
+					
+					
+					local function findCorrectTrainRemote()
+						for i, v in pairs(game.ReplicatedStorage.Remotes.Server:GetChildren()) do
+							if v.Name:sub(15, 15) == "8" then
+								return v
+							end
+						end
+					end
+					
+					local function tweento(part, pos, speed, cframe)
+						local velocity = Instance.new("BodyVelocity", part)
+						velocity.Name = "nil"
+						velocity.Velocity = Vector3.new(0,0,0)
+						
+						if part:FindFirstChild("Humanoid") then
+							game.Players.LocalPlayer.Character.Humanoid:ChangeState(11)
+							game.Players.LocalPlayer.Character.Humanoid.Jump = true
+						end
+						
+						local calculation = (part.Position - pos).Magnitude / (speed)
+						local Tween = TweenService:Create(part, TweenInfo.new(calculation, Enum.EasingStyle.Linear), {CFrame = cframe})
+						Tween:Play()
+						wait(calculation + .5)
+						velocity:Destroy()
+					end
+					
+					local function fetchTrain(action)
+						if action == "CollectMoney" or action == "RobTrain" then
+							trainRemote = findCorrectTrainRemote()
+							trainRemote:FireServer(action)
+						end
+					end
+					
+					local function enterNearestVehicle()
+						local tries = 0
+						local function nearestVehicle()
+							getAllVehicles()
+							local closest, vehicle = math.huge, nil
+							for i, v in pairs(vehicles) do
+								local newMag = (v.Position - player.Character.HumanoidRootPart.Position).Magnitude
+								if newMag < closest then
+									closest = newMag
+									vehicle = v.Parent
+								end
+							end
+							return vehicle
+						end
+						
+						local findVehicle
+						repeat
+							findVehicle = nearestVehicle()
+							if findVehicle ~= nil then
+								tweento(player.Character.HumanoidRootPart, findVehicle:FindFirstChildOfClass("VehicleSeat").Position, _G.Stats["AutoRobSpeed"], findVehicle:FindFirstChildOfClass("VehicleSeat").CFrame)
+								fetchKeybind("EnterVehicle", {findVehicle:FindFirstChildOfClass("VehicleSeat")})
+							else
+								findVehicle = nearestVehicle()
+							end
+							wait(.5)
+						until player.Character:FindFirstChild("Humanoid").SeatPart ~= nil or tries >= 30
+						return findVehicle
+					end
+					
+					local function carTeleport(vehicle, cframe)
+						if vehicle then
+							vehicle:SetPrimaryPartCFrame(cframe)
+						end
+						wait(.5)
+					end
+					
+					local function encryptTrain()
+						if workspace:FindFirstChild("Trains") then
+							for i, v in pairs(workspace:FindFirstChild("Trains"):GetChildren()) do
+								if v.Name == "MainCar" then
+									v.Name = "NotRelevant"
+								end
+							end
+						else
+							return
+						end
+					end
+					
+					local function getObjectNear(location)
+						local closest, object = math.huge, nil
+						for i, v in pairs(workspace:GetChildren()) do
+							if v:IsA("BasePart") then
+								local mag = (v.Position - location).Magnitude
+								if mag < closest then
+									closest = mag
+									object = v
+								end
+							end
+						end
+						return object
+					end
+					
+					
+					local function checkForOpenRobberys()
+						local function donutStore()
+							for i, v in pairs(workspace:GetChildren()) do
+								if v:FindFirstChild("Action") then
+									if v:FindFirstChild("Action").Value == "RobDonutStore" then
+										return true, v
+									end
+								end
+							end
+						end
+						
+						local function serverRoom()
+							for i, v in pairs(workspace:GetChildren()) do
+								if v:FindFirstChild("Action") then
+									if v:FindFirstChild("Action").Value == "OpenVault" then
+										return true, v
+									end
+								end
+							end
+						end
+						
+						local function train()
+							for i, v in pairs(workspace:FindFirstChild("Trains"):GetChildren()) do
+								if v.Name == "MainCar" then
+									return true, v
+								end
+							end
+						end
+						
+						-- EXECUTING FUNCTIONS
+						
+						local train, car = train();
+						local donut, register = donutStore();
+						local server, lever = serverRoom();
+						if train then
+							if car:FindFirstChild("Model") then
+								if car:FindFirstChild("Model"):FindFirstChild("RobPart") then
+									local collectedMoney = 0
+									local vehicle = enterNearestVehicle()
+									carTeleport(vehicle, CFrame.new(car:FindFirstChild("Model"):FindFirstChild("RobPart").Position))
+									player.Character.Humanoid.Jump = true
+									repeat
+										wait(.25)
+										local s, e = pcall(function()
+											player.Character.HumanoidRootPart.CFrame = CFrame.new(car:FindFirstChild("Model"):FindFirstChild("RobPart").Position)
+											collectedMoney = game.ReplicatedStorage.Remotes.Server.CheckServerVariable:InvokeServer("MoneyCollected")
+										end)
+										if s then else break end
+									until collectedMoney > 0
+									wait(1)
+									repeat
+										wait(1)
+										collectedMoney = game.ReplicatedStorage.Remotes.Server.CheckServerVariable:InvokeServer("MoneyCollected")
+									until collectedMoney >= 3000 or #workspace:FindFirstChild("Trains"):GetChildren() == 0
+									local vehicle2 = enterNearestVehicle()
+									fetchTrain("CollectMoney")
+									wait(.5)
+									carTeleport(vehicle2, CFrame.new(-1579.709, 16.922, 425.595))
+									encryptTrain()
+									return true
+								end
+							end
+						elseif donut then
+							fetchKeybind("RobDonutStore", {register})
+						elseif server then
+							fetchKeybind("OpenVault", {lever})
+							local vehicle = enterNearestVehicle()
+							carTeleport(vehicle, CFrame.new(-1985.845, 13.493, -1668.189))
+							wait(1)
+							player.Character.Humanoid.Jump = true
+							tweento(player.Character.HumanoidRootPart, Vector3.new(-1985.845, 7.599, -1716.899), _G.Stats["AutoRobSpeed"], CFrame.new(-1985.845, 7.599, -1716.899))
+							wait(.5)
+							fetchKeybind("ServerHack", {game.Workspace.Servers.Union})
+							local getServerRoomRobberyGui = player.PlayerGui.Game.ServerRobbery
+							if getServerRoomRobberyGui then
+								for i = 4,0,-1 do
+									wait(.5)
+									game.ReplicatedStorage.Remotes.Server.VerifyPassword:FireServer(getServerRoomRobberyGui.Password.Text)
+								end
+							end
+							wait(.5)
+							local vehicle = enterNearestVehicle()
+							carTeleport(vehicle, CFrame.new(-1579.709, 16.922, 425.595))
+							return true
+						else
+							if _G.Stats["BountyResetEnabled"] then
+								local currentBounty = game.ReplicatedStorage.Remotes.Server.CheckServerVariable("Bounty")
+								if currentBounty > _G.Stats["BountyResetEnabled"] then
+									player.Character.Humanoid.Health = 0
+								end
+							end
+						end
+					end
+					
+					spawn(function()
+						while wait() do
+							if player.Team == game.Teams.Prisoner then
+								local result = enterNearestVehicle()
+								carTeleport(result, CFrame.new(-1579.709, 16.922, 425.595))
+							end
+							if v == false then 
+								break 
+							end
+							checkForOpenRobberys()
+						end
+					end)
+				elseif i == "AutoBreakout" then
+					spawn(function()
+						local player = game.Players.LocalPlayer
+						
+						while wait() do
+							if player.Character then
+								if player.Character:FindFirstChild("Humanoid") then
+									if player.Character:FindFirstChild("Humanoid").WalkSpeed == 0 then
+										fetchKeybind("Breakout", {player.Character.HumanoidRootPart})
+									end
+								end
+							end
+							if v == false then 
+								break 
+							end
+						end
+					end)
+				end
+			end
+		end,
+		Options = {
+			["AutoRob [⚠️ DETECTED ⚠️]"] = {
+				Enabled = false,
+				Menu = {
+					Info = function(self)
+						UI.Banner({
+							Text = "Robs all the stores in-game for you! [CURRENTLY DETECTED DONT USE IT]"
+						})
+					end
+				}
+			};
+			AutoBreakout = {
+				Enabled = false,
+				Menu = {
+					Info = function(self)
+						UI.Banner({
+							Text = "Breaks you out of your Handcuffs while being arrested!" 
+						})
+					end
+				}
+			};
+			["Bounty Reset"] = {
+				Enabled = false,
+				Menu = {
+					Info = function(self)
+						UI.Banner({
+							Text = "Resets your Bounty to if it crosses the given amount!" 
+						})
+					end
+				}
+			};
+		}
+	})
+	
+	MainCheats.DataTable({
+		Text = "Char",
+		Callback = function(dt)
+			if dt["Eject All"] then
+				spawn(function()
+					while wait(1.5) do
+						-- Loop through everybody & get their Character / fetchKeybind("Eject", {player.Character.HumanoidRootPart})
+						fetchKeybind("Eject", {player.Character.HumanoidRootPart})
+					end
+				end)
+			elseif dt["Noclip"] then
+				local Noclipping = nil
+				local Clip = false
+				wait(0.1)
+				local function NoclipLoop()
+					if Clip == false and player.Character ~= nil then
+						for _, child in pairs(player.Character:GetDescendants()) do
+							if child:IsA("BasePart") and child.CanCollide == true then--and child.Name ~= floatName then
+								child.CanCollide = false
+							end
+						end
+					end
+				end
+				Noclipping = game:GetService('RunService').Stepped:Connect(NoclipLoop)
+			elseif dt["AntiRagdoll"] then
+				player.Character:FindFirstChild("RagdollMe").Disabled = not player.Character:FindFirstChild("RagdollMe").Disabled
+				player.Character:FindFirstChild("KillScript").Disabled = not player.Character:FindFirstChild("KillScript").Disabled
+			end
+		end,
+		Options = {
+			Noclip = {
+				Enabled = false,
+				Menu = {
+					Info = function(self)
+						UI.Banner({
+							Text = "Lets you go through all the buildings!"
+						})
+					end
+				}
+			};
+			AntiRagdoll = {
+				Enabled = false,
+				Menu = {
+					Info = function(self)
+						UI.Banner({
+							Text = "Doesnt ragdoll you when being tazed!" 
+						})
+					end
+				}
+			};
+			["Eject All"] = {
+				Enabled = false,
+				Menu = {
+					Info = function(self)
+						UI.Banner({
+							Text = "Ejects everybody out of their Vehicle!"
+						})
+					end
+				}
+			};
+		}
+	})
+	
+	MainCheats.Slider({
+		Text = "Speed",
+		Callback = function(value)
+			if value <= 100 and value >= 16 then
+				player.Character:FindFirstChild("Humanoid").WalkSpeed = value
+			else
+				player:Kick([[ [Error: 259 (Blacklist)]
+					You are Blacklisted from using this Hub!
+					
+					Date: ]].. os.date() ..[[
+					Reason: (Speed Spoofing/Value:]].. value ..[[)
+					
+					This blacklist is Permanent and cant be Appealed!
+					You are not banned from Buying another Key!
+				]]
+				)
+			end
+		end,
+		Min = 16,
+		Max = 100,
+		Def = 16,
+	})
+	
+	MainCheats.Slider({
+		Text = "JumpPower!",
+		Callback = function(value)
+			if value <= 500 and value >= 50 then
+				player.Character:FindFirstChild("Humanoid").JumpPower = value
+			else
+				player:Kick([[ [Error: 259 (Blacklist)]
+					You are Blacklisted from using this AutoFarm!
+					
+					Date: ]].. os.date() ..[[
+					Reason: (Speed Spoofing/Value:]].. value ..[[)
+					
+					This blacklist is Permanent and cant be Appealed!
+					You are not banned from Buying another Key!
+				]]
+				)
+			end
+		end,
+		Min = 50,
+		Max = 500,
+		Def = 50,
+	})
+	
+--[[combat.DataTable({
+	Text = "Combat",
+	Callback = function(dt)
+		
+	end,
+	Options = {
+		["Infinite Clip"] = {
+			Enabled = false,
+			Menu = {
+				Info = function(self)
+					UI.Banner({
+						Text = "Doesnt let your Clip go to 0!"
+					})
+				end
+			}
+		};
+		
+	}
+})]]
+elseif game.PlaceId == 286090429 then
+	local UI = Material.Load({
+		Title = "Whitelister's Hub V2",
+		Style = 3,
+		SizeX = 400,
+		SizeY = 300,
+		Theme = "Light"
+	})
+	
+	local MainCheats = UI.New({
+		Title = "Cheats"
+	})
+	
+	MainCheats.Button({
+		Text = "Silent Aim",
+		Callback = function()
+			local CurrentCamera = workspace.CurrentCamera
+			local Players = game.GetService(game, "Players")
+			local LocalPlayer = Players.LocalPlayer
+			local Mouse = LocalPlayer:GetMouse()
+			function ClosestPlayer()
+				local MaxDist, Closest = math.huge
+				for I,V in pairs(Players.GetPlayers(Players)) do
+					if V == LocalPlayer then continue end
+					if V.Team == LocalPlayer then continue end
+					if not V.Character then continue end
+					local Head = V.Character.FindFirstChild(V.Character, "Head")
+					if not Head then continue end
+					local Pos, Vis = CurrentCamera.WorldToScreenPoint(CurrentCamera, Head.Position)
+					if not Vis then continue end
+					local MousePos, TheirPos = Vector2.new(Mouse.X, Mouse.Y), Vector2.new(Pos.X, Pos.Y)
+					local Dist = (TheirPos - MousePos).Magnitude
+					if Dist < MaxDist then
+						MaxDist = Dist
+						Closest = V
+						print("working")
+					end
+				end
+				return Closest
+			end
+			local MT = getrawmetatable(game)
+			local OldNC = MT.__namecall
+			local OldIDX = MT.__index
+			setreadonly(MT, false)
+			MT.__namecall = newcclosure(function(self, ...)
+				local Args, Method = {...}, getnamecallmethod()
+				if Method == "FindPartOnRayWithIgnoreList" and not checkcaller() then
+					local CP = ClosestPlayer()
+					if CP and CP.Character and CP.Character.FindFirstChild(CP.Character, "Head") then
+						Args[1] = Ray.new(CurrentCamera.CFrame.Position, (CP.Character.Head.Position - CurrentCamera.CFrame.Position).Unit * 1000)
+						return OldNC(self, unpack(Args))
+					end
+				end
+				return OldNC(self, ...)
+			end)
+			MT.__index = newcclosure(function(self, K)
+				if K == "Clips" then
+					return workspace.Map
+				end
+				return OldIDX(self, K)
+			end)
+			setreadonly(MT, true)
+		end
+	})
+elseif game.PlaceId == 155615604 then
+	local UI = Material.Load({
+		Title = "Whitelister's Hub V2",
+		Style = 3,
+		SizeX = 400,
+		SizeY = 300,
+		Theme = "Light"
+	})
+	
+	local Cheats = UI.New({
+		Title = "Cheats"
+	})
+	
+	Cheats.Dropdown({
+		Text = "Switch Team",
+		Callback = function(value)
+			if value == "Neutral" then
+				workspace.Remote.TeamEvent:FireServer("Medium stone grey")
+			elseif value == "Police" then
+				workspace.Remote.TeamEvent:FireServer("Bright blue")
+			elseif value == "Prisoner" then
+				workspace.Remote.TeamEvent:FireServer("Bright orange")
+			end
+		end,
+		Options = {"Neutral", "Police", "Prisoner"}
+	})
+	Cheats.Button({
+		Text = "Taser Bypass",
+		Callback = function()
+			game.Players.LocalPlayer.Character.ClientInputHandler.Disabled = true
+			game.Players.LocalPlayer.CharacterAdded:connect(function()
+				game.Workspace:WaitForChild(game.Players.LocalPlayer.Name)
+				game.Players.LocalPlayer.Character.ClientInputHandler.Disabled = true
+			end)
+		end,
+	})
+	Cheats.Button({
+		Text = "Guns",
+		Callback = function()
+			for i,v in pairs(workspace.Prison_ITEMS.giver:GetChildren()) do
+				local lol = workspace.Remote.ItemHandler:InvokeServer(v.ITEMPICKUP)
+			end
+		end,
+	})
+	Cheats.Button({
+		Text = "Auto Arrest",
+		Callback = function()
+			local Player = game.Players.LocalPlayer
+			local cpos = Player.Character.HumanoidRootPart.CFrame
+			for i,v in pairs(game.Teams.Criminals:GetPlayers()) do
+				if v.Name ~= Player.Name then
+					local i = 10
+					repeat
+						wait()
+						i = i-1
+						game.Workspace.Remote.arrest:InvokeServer(v.Character.HumanoidRootPart)
+						Player.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 1)
+					until i == 0
+				end
+			end
+			wait()
+			for i,v in pairs(game.Teams.Inmates:GetPlayers()) do
+				if v.Name ~= Player.Name then
+					local i = 10
+					repeat
+						wait()
+						i = i-1
+						game.Workspace.Remote.arrest:InvokeServer(v.Character.HumanoidRootPart)
+						Player.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 1)
+					until i == 0
+				end
+			end
+			Player.Character.HumanoidRootPart.CFrame = cpos
+		end,
+	})
+	Cheats.Button({
+		Text = "Noclip",
+		Callback = function()
+			local Noclipping = nil
+			local Clip = false
+			wait(0.1)
+			local function NoclipLoop()
+				if Clip == false and game.Players.LocalPlayer.Character ~= nil then
+					for _, child in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+						if child:IsA("BasePart") and child.CanCollide == true then--and child.Name ~= floatName then
+							child.CanCollide = false
+						end
+					end
+				end
+			end
+			Noclipping = game:GetService('RunService').Stepped:Connect(NoclipLoop)
+		end,
+	})
+	Cheats.Slider({
+		Text = "Speed",
+		Callback = function(value)
+			if value <= 500 and value >= 16 then
+				game.Players.LocalPlayer.Character:FindFirstChild("Humanoid").WalkSpeed = value
+			else
+				game.Players.LocalPlayer:Kick([[ [Error: 259 (Blacklist)]
+					You are Blacklisted from using this AutoFarm!
+					
+					Date: ]].. os.date() ..[[
+					Reason: (Speed Spoofing/Value:]].. value ..[[)
+					
+					This blacklist is Permanent and cant be Appealed!
+					You are not banned from Buying another Key!
+				]]
+				)
+			end
+		end,
+		Min = 16,
+		Max = 500,
+		Def = 16,
+	})
+	Cheats.Slider({
+		Text = "JumpPower",
+		Callback = function(value)
+			if value <= 500 and value >= 50 then
+				game.Players.LocalPlayer.Character:FindFirstChild("Humanoid").JumpPower = value
+			else
+				game.Players.LocalPlayer:Kick([[ [Error: 259 (Blacklist)]
+					You are Blacklisted from using this AutoFarm!
+					
+					Date: ]].. os.date() ..[[
+					Reason: (Speed Spoofing/Value:]].. value ..[[)
+					
+					This blacklist is Permanent and cant be Appealed!
+					You are not banned from Buying another Key!
+				]]
+				)
+			end
+		end,
+		Min = 50,
+		Max = 500,
+		Def = 50;
+	})
+elseif game.PlaceId == 1647589158 then
+	local UI = Material.Load({
+		Title = "Whitelister's Hub V2",
+		Style = 3,
+		SizeX = 400,
+		SizeY = 300,
+		Theme = "Light"
+	})
+	
+	local Cheats = UI.New({
+		Title = "AutoFarm"
+	})
+	
+	Cheats.Button({
+		Text = "Start",
+		Callback = function()
+			local player = game.Players.LocalPlayer
+			local TweenService = game:GetService("TweenService")
+			local function tweento(part, pos, speed, cframe)
+				local velocity = Instance.new("BodyVelocity", part)
+				velocity.Name = "nil"
+				velocity.Velocity = Vector3.new(0 ,0 ,0)
+				
+				spawn(function()
+					while wait() do
+						game.Players.LocalPlayer.Character.Humanoid:ChangeState(11)
+					end
+				end)
+				
+				game.Players.LocalPlayer.Character.Humanoid.Jump = true
+				
+				local calculation = (part.Position - pos).Magnitude / (speed)
+				local Tween = TweenService:Create(part, TweenInfo.new(calculation, Enum.EasingStyle.Linear), {CFrame = cframe})
+				Tween:Play()
+				wait(calculation + .5)
+			end
+			
+			local function vehicleTeleport(vehicle, cframe)
+				vehicle:SetPrimaryPartCFrame(cframe)
+				wait(.5)
+				return;
+			end
+			
+			local function getObjectNear(location, childOf)
+				local closest, object = math.huge, nil
+				for i, v in pairs(childOf:GetChildren()) do
+					if v:IsA("BasePart") then
+						local mag = (v.Position - location).Magnitude
+						if mag < closest then
+							closest = mag
+							object = v
+						end
+					end
+				end
+				return object
+			end
+			
+			local starbucksCooldown = 		tick();
+			local supermarketCooldown = 	tick();
+			
+			local vehicleTable = 	{[1] = "Caddie"}
+			local museumTable = 	{[1] = "CollectMuseumArtifact",[2] = workspace.Robberies.Museum.TRex.Bone}
+			local resortTable = 	{[1] = "RemoveVent",[2] = workspace.UnorganizedStuff.UNIONPart}
+			local dynamiteTable = 	{[1] = "TakeDynamite",[2] = workspace.DynamiteBarrels.DynamiteBarrel}
+			local vehicleTab = 		{[1] = "EnterVehicle",[2] = nil}
+			local ventTable = 		{[1] = "RemoveJewelVent",[2] = workspace.UnorganizedStuff.UNIONPart}
+			local jewelryPunch = 	{[1] = workspace.Robberies.JewelryStore.JewelCases.JewelCase.PunchableGlass}
+			local templeTable = 	{[1] = "TakeTempleArtifact",[2] = workspace.Robberies.DesertTemple.Artifacts.Statue}
+			--local starbucksTab = 	{[1] = "RobStarBlox",[2] = workspace.HighDetail.InteriorObjects.coffeeshop.Model.Context}
+			--local supermarketTab = 	{[1] = "RobBloxMart",[2] = workspace.Robberies.BloxMart.Model.Context}
+			
+			local function checkRobberys()
+				if workspace.Robberies.Museum.OpenSign.Sign.SurfaceGui.Label.Text:lower() == "open" then
+					return "Museum"
+				elseif workspace.Robberies.Bank.OpenSign.Sign.SurfaceGui.Label.Text:lower() == "open" then
+					return "Bank"
+				elseif workspace.Robberies.Resort.OpenSign.Sign.SurfaceGui.Label.Text:lower() == "open" then
+					return "Resort"
+					--elseif workspace.Robberies.JewelryStore.OpenSign.Sign.SurfaceGui.Label.Text:lower() == "open" then
+					--	return "Jewelry"
+				elseif workspace.Robberies.DesertTemple.FrontDoor.Closed.Transparency == 1 then
+					return "Temple"
+				end
+			end
+			
+			if workspace.Map.City.MiscBuildings:FindFirstChild("BlueBuilding") and workspace.Robberies.Museum:FindFirstChild("Spotlights") and workspace.Robberies.Museum:FindFirstChild("Lasers") then
+				workspace.Map.City.MiscBuildings:FindFirstChild("BlueBuilding"):Destroy()
+				workspace.Robberies.Museum:FindFirstChild("Spotlights"):Destroy()
+				workspace.Robberies.Museum:FindFirstChild("Lasers"):Destroy()
+			end
+			
+			while wait() do
+				if player.Team == game.Teams.Prisoners then
+					tweento(player.Character.HumanoidRootPart, Vector3.new(-360, 26, -78), 35, CFrame.new(-360, 26, -78))
+					game:GetService("ReplicatedStorage").Functions.SpawnVehicle:InvokeServer(unpack(vehicleTable))
+					local vehicle = player.Character.Humanoid.SeatPart.Parent.Parent
+					if vehicle then
+						vehicleTeleport(vehicle, CFrame.new(-2557.01, 89.563, 1137.1))
+					else
+						repeat			
+							game:GetService("ReplicatedStorage").Functions.SpawnVehicle:InvokeServer(unpack(vehicleTable))
+							wait(5)
+						until player.Character.Humanoid.SeatPart ~= nil
+						vehicleTeleport(vehicle, CFrame.new(-2557.01, 89.563, 1137.1))
+					end
+					wait(.5)
+				end
+				local openRobberys = checkRobberys()
+				if openRobberys == "Museum" then
+					if player.Character.Humanoid.SeatPart ~= nil then
+						local tpVehicle = player.Character.Humanoid.SeatPart.Parent.Parent
+						vehicleTeleport(tpVehicle, CFrame.new(-3034.25, 38.19, 844.318))
+						--player.Character:FindFirstChild("Humanoid").Jump = true
+						for i, v in pairs(workspace.Robberies.Museum.TRex:GetChildren()) do
+							museumTable[2] = v
+							game:GetService("ReplicatedStorage").NetworkEvents.EventIndex1:FireServer(unpack(museumTable))
+						end
+						wait(.5)
+						--	tweento(player.Character.HumanoidRootPart, Vector3.new(-3034.25, 38.19, 844.318), 35, CFrame.new(-3034.25, 38.19, 844.318))
+						vehicleTeleport(tpVehicle, CFrame.new(-3299.591, 23.925, 110.212))
+						workspace.Robberies.Museum.OpenSign.Sign.SurfaceGui.Label.Text = "ENCRYPTED"
+					end
+				elseif openRobberys == "Bank" then
+					local tpVehicle = player.Character.Humanoid.SeatPart.Parent.Parent
+					if tpVehicle then
+						vehicleTeleport(tpVehicle, CFrame.new(-2838.08, 31.058, 107.26))
+						wait(20)
+						vehicleTeleport(tpVehicle, CFrame.new(-3299.591, 23.925, 110.212))
+						workspace.Robberies.Bank.OpenSign.Sign.SurfaceGui.Label.Text = "ENCRYPTED"
+					end
+				elseif openRobberys == "Resort" then
+					local tpVehicle = player.Character.Humanoid.SeatPart.Parent.Parent
+					local vent = getObjectNear(Vector3.new(-2744.65, 25.202, 1770.912), workspace.UnorganizedStuff)
+					if tpVehicle and vent then
+						resortTable[2] = vent;
+						game:GetService("ReplicatedStorage").NetworkEvents.EventIndex2:FireServer(unpack(resortTable))
+						
+						vehicleTeleport(tpVehicle, CFrame.new(-2823.514, -23.571, 1702.122))
+						game:GetService("ReplicatedStorage").Events.ExitVehicle:FireServer()
+						wait(.5)
+						if player.Backpack:FindFirstChild("Dynamite") then
+							player.Character.Humanoid:EquipTool(player.Backpack:FindFirstChild("Dynamite"))
+						else
+							game:GetService("ReplicatedStorage").NetworkEvents.EventIndex6:FireServer(unpack(dynamiteTable))
+							wait(.5)
+							player.Character.Humanoid:EquipTool(player.Backpack:FindFirstChild("Dynamite"))
+						end
+						tweento(player.Character.HumanoidRootPart, Vector3.new(-2809.962, -24.786, 1714.963), 35, CFrame.new(-2809.962, -24.786, 1714.963))
+						wait(2)
+						vehicleTab[2] = tpVehicle.Seats.Driver
+						game:GetService("ReplicatedStorage").NetworkEvents.EventIndex1:FireServer(unpack(vehicleTab))
+						
+						wait(35)
+						vehicleTeleport(tpVehicle, CFrame.new(-3299.591, 23.925, 110.212))
+						workspace.Robberies.Resort.OpenSign.Sign.SurfaceGui.Label.Text = "ENCRYPTED"
+					end
+				elseif openRobberys == "Jewelry" then
+					local tpVehicle = player.Character.Humanoid.SeatPart.Parent.Parent
+					local vent = getObjectNear(Vector3.new(-2744.65, 25.202, 1770.912), workspace.UnorganizedStuff)
+					if vent and tpVehicle then
+						ventTable[2] = vent;
+						game:GetService("ReplicatedStorage").NetworkEvents.EventIndex2:FireServer(unpack(ventTable))
+						local amount = 0
+						for i, v in pairs(workspace.Robberies.JewelryStore.JewelCases:GetChildren()) do
+							wait(1)
+							jewelryPunch[1] = v.PunchableGlass
+							game:GetService("ReplicatedStorage").Events.PunchHit:FireServer(unpack(jewelryPunch))
+						end
+						workspace.Robberies.JewelryStore.OpenSign.Sign.SurfaceGui.Label.Text = "ENCRYPTED"
+						vehicleTeleport(tpVehicle, CFrame.new(-3073.612, 24.386, 1002.212))
+					else
+						print("Vent could'nt be found!")
+					end
+				elseif openRobberys == "Temple" then
+					local tpVehicle = player.Character.Humanoid.SeatPart.Parent.Parent
+					if tpVehicle then
+						workspace.Robberies.DesertTemple.FrontDoor.Closed.Transparency = 0
+						game:GetService("ReplicatedStorage").NetworkEvents.EventIndex4:FireServer(unpack(templeTable))
+						wait(1)
+						vehicleTeleport(tpVehicle, CFrame.new(-3073.612, 24.386, 1002.212))
+					end
+				else
+					local safePlaceMag = (Vector3.new(-2557.01, 89.563, 1137.1) - player.Character.HumanoidRootPart.Position).Magnitude
+					if safePlaceMag > 75 then
+						local tpVehicle = player.Character.Humanoid.SeatPart.Parent.Parent
+						vehicleTeleport(tpVehicle, CFrame.new(-2557.01, 89.563, 1137.1))
+	--[[	else
+			if starbucksCooldown < tick() then
+				game:GetService("ReplicatedStorage").NetworkEvents.EventIndex9:FireServer(unpack(starbucksTab))
+				starbucksTab = tick() + 300
+			elseif supermarketCooldown < tick() then
+				
+			end]]
+					end
+				end
+			end
+		end,
+	})
+end
